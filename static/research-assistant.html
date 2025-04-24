@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Assistant</title>
+    <style>
+        :root {
+            --dark-bg: #121212;
+            --darker-bg: #0a0a0a;
+            --accent-blue: #4285f4;
+            --text-color: #ffffff;
+            --secondary-text: #b0b0b0;
+            --card-bg: #1e1e1e;
+            --border-color: #333333;
+            --user-bg: #2a3d66;
+            --bot-bg: #265d6e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 60px;
+            background-color: var(--darker-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .sidebar-toggle {
+            color: var(--text-color);
+            background: none;
+            border: none;
+            font-size: 24px;
+            margin-bottom: 30px;
+            cursor: pointer;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background-color: #555;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .logo-title {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .tagline {
+            font-size: 14px;
+            color: var(--secondary-text);
+            margin-top: 5px;
+        }
+
+        .content-area {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .chat-area {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: calc(100vh - 140px);
+        }
+
+        .chat-message {
+            display: flex;
+            margin-bottom: 20px;
+            gap: 15px;
+            animation: slideIn 0.3s ease-in;
+        }
+
+        .chat-message.user {
+            flex-direction: row-reverse;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .bot-avatar {
+            background-color: var(--bot-bg);
+            color: #7cdbe6;
+        }
+
+        .user-avatar {
+            background-color: var(--user-bg);
+            color: #ffffff;
+        }
+
+        .message-content {
+            padding: 15px;
+            border-radius: 8px;
+            max-width: 70%;
+            color: var(--text-color);
+            position: relative;
+        }
+
+        .bot .message-content {
+            background-color: var(--bot-bg);
+        }
+
+        .user .message-content {
+            background-color: var(--user-bg);
+        }
+
+        .message-timestamp {
+            font-size: 12px;
+            color: var(--secondary-text);
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        .message-error {
+            color: #ff4d4d;
+            background-color: #3d1a1a;
+        }
+
+        .message-loading {
+            color: var(--secondary-text);
+            background-color: var(--card-bg);
+            font-style: italic;
+        }
+
+        .input-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 20px;
+            background-color: var(--dark-bg);
+            border-top: 1px solid var(--border-color);
+            position: fixed;
+            bottom: 0;
+            left: 60px;
+            right: 300px;
+            z-index: 10;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border: 1px solid var(--border-color);
+            border-radius: 25px;
+            color: var(--text-color);
+            font-size: 16px;
+        }
+
+        .send-btn {
+            background: none;
+            border: none;
+            color: var(--accent-blue);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 10px;
+        }
+
+        .resources-area {
+            width: 300px;
+            border-left: 1px solid var(--border-color);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .resources-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            color: var(--secondary-text);
+        }
+
+        .tab.active {
+            color: var(--accent-blue);
+            border-bottom: 2px solid var(--accent-blue);
+        }
+
+        .resource-list {
+            list-style-type: none;
+        }
+
+        .resource-list li {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        .resource-list li::before {
+            content: "•";
+            color: var(--accent-blue);
+            margin-right: 10px;
+        }
+
+        .resource-list a {
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+
+        .resource-list a:hover {
+            text-decoration: underline;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content-area {
+                flex-direction: column;
+            }
+            .chat-area {
+                max-height: calc(50vh - 80px);
+            }
+            .input-area {
+                left: 0;
+                right: 0;
+                bottom: 0;
+            }
+            .resources-area {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid var(--border-color);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <button class="sidebar-toggle" onclick="window.location.href='/'">⟨</button>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <div class="logo-container">
+                <div class="logo">🤖</div>
+                <div>
+                    <div class="logo-title">Research Assistant</div>
+                    <div class="tagline">Ask any question about deepfake technology, research, or ethics.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div class="chat-area" id="chatArea">
+                <div class="chat-message bot">
+                    <div class="avatar bot-avatar">🤖</div>
+                    <div class="message-content">
+                        Hello! I'm Mr. Deepfake Research Assistant. How can I help with your deepfake-related questions today?
+                        <div class="message-timestamp" data-timestamp=""></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <input type="text" class="message-input" id="messageInput" placeholder="Type your question about deepfake research...">
+                <button class="send-btn" id="sendBtn" title="Send message">➤</button>
+            </div>
+
+            <div class="resources-area">
+                <h2 class="resources-title">Resources</h2>
+                <div class="tabs">
+                    <div class="tab active" data-tab="papers">Papers</div>
+                    <div class="tab" data-tab="tools">Tools</div>
+                    <div class="tab" data-tab="news">News</div>
+                </div>
+                <div class="tab-content active" id="papers">
+                    <ul class="resource-list">
+                        <li><a href="https://www.kaggle.com/competitions/deepfake-detection-challenge" target="_blank" rel="noopener noreferrer">DeepFake Detection Challenge (DFDC)</a></li>
+                        <li><a href="https://github.com/ondyari/FaceForensics" target="_blank" rel="noopener noreferrer">FaceForensics++</a></li>
+                        <li><a href="https://arxiv.org/abs/2004.11138" target="_blank" rel="noopener noreferrer">The Creation and Detection of Deepfakes</a></li>
+                    </ul>
+                </div>
+                <div class="tab-content" id="tools">
+                    <ul class="resource-list">
+                        <li><a href="https://github.com/iperov/DeepFaceLab" target="_blank" rel="noopener noreferrer">DeepFaceLab</a></li>
+                        <li><a href="https://sensity.ai/" target="_blank" rel="noopener noreferrer">Sensity AI</a></li>
+                        <li><a href="https://www.microsoft.com/en-us/research/project/video-authenticator/" target="_blank" rel="noopener noreferrer">Microsoft Video Authenticator</a></li>
+                    </ul>
+                </div>
+                <div class="tab-content" id="news">
+                    <ul class="resource-list">
+                        <li><a href="https://www.reuters.com/technology/eu-ai-act-what-it-means-deepfake-technology-2024-08-01/" target="_blank" rel="noopener noreferrer">Latest Deepfake Regulations</a></li>
+                        <li><a href="https://www.technologyreview.com/2025/01/15/1102876/deepfake-detection-breakthrough/" target="_blank" rel="noopener noreferrer">AI Detection Breakthrough</a></li>
+                        <li><a href="https://www.unesco.org/en/artificial-intelligence/ethics" target="_blank" rel="noopener noreferrer">Ethics Panel Findings</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatArea = document.getElementById('chatArea');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        // Format timestamp
+        function getTimestamp() {
+            return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Update all timestamps
+        function updateTimestamps() {
+            document.querySelectorAll('.message-timestamp').forEach(timestamp => {
+                timestamp.textContent = getTimestamp();
+            });
+        }
+
+        // Initial timestamp update
+        updateTimestamps();
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                const tabName = this.getAttribute('data-tab');
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(tabName).classList.add('active');
+            });
+        });
+
+        // Send message
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) {
+                messageInput.focus();
+                return;
+            }
+
+            // Add user message
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.className = 'chat-message user';
+            userMessageDiv.innerHTML = `
+                <div class="avatar user-avatar">👤</div>
+                <div class="message-content">
+                    ${message}
+                    <div class="message-timestamp">${getTimestamp()}</div>
+                </div>
+            `;
+            chatArea.appendChild(userMessageDiv);
+            messageInput.value = '';
+            scrollToBottom();
+
+            // Add loading message
+            const loadingMessageDiv = document.createElement('div');
+            loadingMessageDiv.className = 'chat-message bot';
+            loadingMessageDiv.innerHTML = `
+                <div class="avatar bot-avatar">🤖</div>
+                <div class="message-content message-loading">
+                    Thinking...
+                    <div class="message-timestamp">${getTimestamp()}</div>
+                </div>
+            `;
+            chatArea.appendChild(loadingMessageDiv);
+            scrollToBottom();
+
+            try {
+                console.log('Sending query:', message);
+                const response = await fetch('http://localhost:8000/api/rag/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: message })
+                });
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                // Remove loading message
+                loadingMessageDiv.remove();
+
+                if (response.ok) {
+                    // Add bot response
+                    const botMessageDiv = document.createElement('div');
+                    botMessageDiv.className = 'chat-message bot';
+                    botMessageDiv.innerHTML = `
+                        <div class="avatar bot-avatar">🤖</div>
+                        <div class="message-content">
+                            ${data.response || 'No response received'}
+                            <div class="message-timestamp">${getTimestamp()}</div>
+                        </div>
+                    `;
+                    chatArea.appendChild(botMessageDiv);
+                } else {
+                    // Add error message
+                    const errorMessageDiv = document.createElement('div');
+                    errorMessageDiv.className = 'chat-message bot';
+                    errorMessageDiv.innerHTML = `
+                        <div class="avatar bot-avatar">🤖</div>
+                        <div class="message-content message-error">
+                            Error: ${data.error || 'Failed to fetch response'}
+                            <div class="message-timestamp">${getTimestamp()}</div>
+                        </div>
+                    `;
+                    chatArea.appendChild(errorMessageDiv);
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                // Remove loading message
+                loadingMessageDiv.remove();
+                // Add error message
+                const errorMessageDiv = document.createElement('div');
+                errorMessageDiv.className = 'chat-message bot';
+                errorMessageDiv.innerHTML = `
+                    <div class="avatar bot-avatar">🤖</div>
+                    <div class="message-content message-error">
+                        Error: ${error.message}
+                        <div class="message-timestamp">${getTimestamp()}</div>
+                    </div>
+                `;
+                chatArea.appendChild(errorMessageDiv);
+            }
+
+            scrollToBottom();
+        }
+
+        // Auto-scroll to bottom
+        function scrollToBottom() {
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+    </script>
+</body>
+</html>

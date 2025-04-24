@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Detector</title>
+    <style>
+        :root {
+            --dark-bg: #121212;
+            --accent-blue: #4285f4;
+            --text-color: #ffffff;
+            --secondary-text: #b0b0b0;
+            --card-bg: #1e1e1e;
+            --border-color: #333333;
+            --light-blue-translucent: rgba(66, 133, 244, 0.2);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        
+        .sidebar {
+            width: 60px;
+            background-color: #0a0a0a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .sidebar-toggle {
+            color: var(--text-color);
+            background: none;
+            border: none;
+            font-size: 24px;
+            margin-bottom: 30px;
+            cursor: pointer;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+        }
+        
+        .header {
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo {
+            width: 40px;
+            height: 40px;
+            background-color: #555;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+        
+        .logo-title {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .tagline {
+            font-size: 14px;
+            color: var(--secondary-text);
+            margin-top: 5px;
+        }
+        
+        .drag-drop-area {
+            width: 100%;
+            height: 400px;
+            background-color: var(--card-bg);
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .drag-drop-area.dragover {
+            background-color: #2a2a2a;
+            border-color: var(--accent-blue);
+        }
+        
+        .drag-drop-text {
+            text-align: center;
+            color: var(--secondary-text);
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: none;
+        }
+        
+        .accuracy-box {
+            width: 100%;
+            background-color: var(--light-blue-translucent);
+            color: var(--text-color);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+            border: 1px solid var(--accent-blue);
+        }
+        
+        .try-again-btn {
+            background-color: var(--accent-blue);
+            border: 1px solid var(--accent-blue);
+            color: var(--text-color);
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 16px;
+            display: none;
+        }
+        
+        .try-again-btn:hover {
+            background-color: #3267d6;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <button class="sidebar-toggle" onclick="window.location.href='/'">⟨</button>
+    </div>
+    
+    <div class="main-content">
+        <div class="header">
+            <div class="logo-container">
+                <div class="logo">🤖</div>
+                <div>
+                    <div class="logo-title">Image Detector</div>
+                    <div class="tagline">Detect deepfake images with ease.</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="drag-drop-area" id="dragDropArea">
+            <div class="drag-drop-text">Drag and drop an image here, or click to select one.</div>
+            <img class="preview-image" id="previewImage" alt="Preview">
+        </div>
+        
+        <div class="accuracy-box" id="accuracyBox">
+            <p>Result: <span id="accuracyValue">Calculating...</span></p>
+        </div>
+        <button class="try-again-btn" id="tryAgainBtn">Try for Another</button>
+    </div>
+    
+    <script>
+        const dragDropArea = document.getElementById('dragDropArea');
+        const previewImage = document.getElementById('previewImage');
+        const accuracyBox = document.getElementById('accuracyBox');
+        const accuracyValue = document.getElementById('accuracyValue');
+        const tryAgainBtn = document.getElementById('tryAgainBtn');
+
+        dragDropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dragDropArea.classList.add('dragover');
+        });
+
+        dragDropArea.addEventListener('dragleave', () => {
+            dragDropArea.classList.remove('dragover');
+        });
+
+        dragDropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragDropArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                console.log('Dropped file:', files[0].name);
+                handleImage(files[0]);
+            }
+        });
+
+        dragDropArea.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = (e) => {
+                if (e.target.files.length > 0) {
+                    console.log('Selected file:', e.target.files[0].name);
+                    handleImage(e.target.files[0]);
+                }
+            };
+            input.click();
+        });
+
+        async function handleImage(file) {
+            if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
+                accuracyBox.style.display = 'block';
+                accuracyValue.textContent = 'Error: Please upload a PNG or JPEG image';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                previewImage.style.display = 'block';
+                dragDropArea.querySelector('.drag-drop-text').style.display = 'none';
+                accuracyBox.style.display = 'block';
+                accuracyValue.textContent = 'Calculating...';
+            };
+            reader.readAsDataURL(file);
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                console.log('Sending image to /api/deepfake/detect');
+                const response = await fetch('http://localhost:8000/api/deepfake/detect', {
+                    method: 'POST',
+                    body: formData
+                });
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (response.ok) {
+                    accuracyValue.innerHTML = `Image is <span style="color: ${data.is_fake ? 'red' : 'green'}">${data.is_fake ? 'Fake' : 'Real'}</span> with ${(data.confidence * 100).toFixed(2)}% confidence`;
+                    tryAgainBtn.style.display = 'block';
+                } else {
+                    accuracyValue.textContent = `Error: ${data.error || 'Failed to detect deepfake'}`;
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                accuracyValue.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        tryAgainBtn.addEventListener('click', () => {
+            previewImage.style.display = 'none';
+            dragDropArea.querySelector('.drag-drop-text').style.display = 'block';
+            accuracyBox.style.display = 'none';
+            tryAgainBtn.style.display = 'none';
+            dragDropArea.classList.remove('dragover');
+        });
+    </script>
+</body>
+</html>

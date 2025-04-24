@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Research Assistant</title>
+    <style>
+        :root {
+            --dark-bg: #121212;
+            --darker-bg: #0a0a0a;
+            --accent-blue: #4285f4;
+            --text-color: #ffffff;
+            --secondary-text: #b0b0b0;
+            --card-bg: #1e1e1e;
+            --border-color: #333333;
+            --user-bg: #2a3d66;
+            --bot-bg: #265d6e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 60px;
+            background-color: var(--darker-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .sidebar-toggle {
+            color: var(--text-color);
+            background: none;
+            border: none;
+            font-size: 24px;
+            margin-bottom: 30px;
+            cursor: pointer;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background-color: #555;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .logo-title {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .tagline {
+            font-size: 14px;
+            color: var(--secondary-text);
+            margin-top: 5px;
+        }
+
+        .content-area {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .chat-area {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: calc(100vh - 140px);
+        }
+
+        .chat-message {
+            display: flex;
+            margin-bottom: 20px;
+            gap: 15px;
+            animation: slideIn 0.3s ease-in;
+        }
+
+        .chat-message.user {
+            flex-direction: row-reverse;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .bot-avatar {
+            background-color: var(--bot-bg);
+            color: #7cdbe6;
+        }
+
+        .user-avatar {
+            background-color: var(--user-bg);
+            color: #ffffff;
+        }
+
+        .message-content {
+            padding: 15px;
+            border-radius: 8px;
+            max-width: 70%;
+            color: var(--text-color);
+            position: relative;
+        }
+
+        .bot .message-content {
+            background-color: var(--bot-bg);
+        }
+
+        .user .message-content {
+            background-color: var(--user-bg);
+        }
+
+        .message-timestamp {
+            font-size: 12px;
+            color: var(--secondary-text);
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        .message-error {
+            color: #ff4d4d;
+            background-color: #3d1a1a;
+        }
+
+        .message-loading {
+            color: var(--secondary-text);
+            background-color: var(--card-bg);
+            font-style: italic;
+        }
+
+        .input-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 20px;
+            background-color: var(--dark-bg);
+            border-top: 1px solid var(--border-color);
+            position: fixed;
+            bottom: 0;
+            left: 60px;
+            right: 300px;
+            z-index: 10;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border: 1px solid var(--border-color);
+            border-radius: 25px;
+            color: var(--text-color);
+            font-size: 16px;
+        }
+
+        .send-btn {
+            background: none;
+            border: none;
+            color: var(--accent-blue);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 10px;
+        }
+
+        .pdf-upload-area {
+            width: 300px;
+            border-left: 1px solid var(--border-color);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .pdf-upload-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            background-color: #2a2a2a;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-color);
+            font-size: 14px;
+        }
+
+        .storage-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #2a2a2a;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-color);
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .storage-btn:hover {
+            background-color: var(--accent-blue);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content-area {
+                flex-direction: column;
+            }
+            .chat-area {
+                max-height: calc(50vh - 80px);
+            }
+            .input-area {
+                left: 0;
+                right: 0;
+                bottom: 0;
+            }
+            .pdf-upload-area {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid var(--border-color);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <button class="sidebar-toggle" onclick="window.location.href='/'">⟨</button>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <div class="logo-container">
+                <div class="logo">📄</div>
+                <div>
+                    <div class="logo-title">PDF Research Assistant</div>
+                    <div class="tagline">Upload a PDF and ask questions about its content.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div class="chat-area" id="chatArea">
+                <div class="chat-message bot">
+                    <div class="avatar bot-avatar">🤖</div>
+                    <div class="message-content">
+                        Hello! I'm the PDF Research Assistant. Upload a PDF and ask questions about its content.
+                        <div class="message-timestamp" data-timestamp=""></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <input type="text" class="message-input" id="messageInput" placeholder="Ask a question about the PDF...">
+                <button class="send-btn" id="sendBtn" title="Send message">➤</button>
+            </div>
+
+            <div class="pdf-upload-area">
+                <h2 class="pdf-upload-title">PDF Upload</h2>
+                <input type="file" class="file-input" id="fileInput" accept=".pdf" title="Upload PDF">
+                <button class="storage-btn" data-store="temporary" disabled>Temporary</button>
+                <button class="storage-btn" data-store="permanent" disabled>Permanent</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatArea = document.getElementById('chatArea');
+        const messageInput = document.getElementById('messageInput');
+        const fileInput = document.getElementById('fileInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const storageButtons = document.querySelectorAll('.storage-btn');
+
+        // Format timestamp
+        function getTimestamp() {
+            return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Update all timestamps
+        function updateTimestamps() {
+            document.querySelectorAll('.message-timestamp').forEach(timestamp => {
+                timestamp.textContent = getTimestamp();
+            });
+        }
+
+        // Initial timestamp update
+        updateTimestamps();
+
+        // Disable storage buttons initially
+        storageButtons.forEach(button => {
+            button.disabled = true;
+        });
+
+        // Handle file upload
+        fileInput.addEventListener('change', async function() {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const uploadMessageDiv = document.createElement('div');
+            uploadMessageDiv.className = 'chat-message user';
+            uploadMessageDiv.innerHTML = `
+                <div class="avatar user-avatar">👤</div>
+                <div class="message-content">
+                    Uploading ${file.name}...
+                    <div class="message-timestamp">${getTimestamp()}</div>
+                </div>
+            `;
+            chatArea.appendChild(uploadMessageDiv);
+            scrollToBottom();
+
+            try {
+                console.log('Uploading file:', file.name);
+                const formData = new FormData();
+                formData.append('file', file);
+                const response = await fetch('/api/rag/upload-pdf', {
+                    method: 'POST',
+                    body: formData
+                });
+                console.log('Upload response status:', response.status);
+                const data = await response.json();
+                console.log('Upload response data:', data);
+
+                uploadMessageDiv.remove();
+
+                if (response.ok) {
+                    const successMessageDiv = document.createElement('div');
+                    successMessageDiv.className = 'chat-message bot';
+                    successMessageDiv.innerHTML = `
+                        <div class="avatar bot-avatar">🤖</div>
+                        <div class="message-content">
+                            Successfully uploaded ${file.name}. Select Temporary or Permanent storage.
+                            <div class="message-timestamp">${getTimestamp()}</div>
+                        </div>
+                    `;
+                    chatArea.appendChild(successMessageDiv);
+                    // Enable storage buttons
+                    storageButtons.forEach(button => {
+                        button.disabled = false;
+                    });
+                } else {
+                    const errorMessageDiv = document.createElement('div');
+                    errorMessageDiv.className = 'chat-message bot';
+                    errorMessageDiv.innerHTML = `
+                        <div class="avatar bot-avatar">🤖</div>
+                        <div class="message-content message-error">
+                            Error uploading ${file.name}: ${data.error || 'Failed to upload'}
+                            <div class="message-timestamp">${getTimestamp()}</div>
+                        </div>
+                    `;
+                    chatArea.appendChild(errorMessageDiv);
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                uploadMessageDiv.remove();
+                const errorMessageDiv = document.createElement('div');
+                errorMessageDiv.className = 'chat-message bot';
+                errorMessageDiv.innerHTML = `
+                    <div class="avatar bot-avatar">🤖</div>
+                    <div class="message-content message-error">
+                        Error uploading ${file.name}: ${error.message}
+                        <div class="message-timestamp">${getTimestamp()}</div>
+                    </div>
+                `;
+                chatArea.appendChild(errorMessageDiv);
+            }
+
+            scrollToBottom();
+            fileInput.value = '';
+        });
+
+        // Handle storage buttons
+        storageButtons.forEach(button => {
+            button.addEventListener('click', async function() {
+                const storeType = this.getAttribute('data-store');
+                const actionMessageDiv = document.createElement('div');
+                actionMessageDiv.className = 'chat-message user';
+                actionMessageDiv.innerHTML = `
+                    <div class="avatar user-avatar">👤</div>
+                    <div class="message-content">
+                        Setting storage to ${storeType}...
+                        <div class="message-timestamp">${getTimestamp()}</div>
+                    </div>
+                `;
+                chatArea.appendChild(actionMessageDiv);
+                scrollToBottom();
+
+                try {
+                    console.log(`Setting storage to: ${storeType}`);
+                    const response = await fetch(`/api/rag/storage/${storeType}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    console.log(`Storage ${storeType} response status:`, response.status);
+                    const data = await response.json();
+                    console.log(`Storage ${storeType} response data:`, data);
+
+                    actionMessageDiv.remove();
+
+                    if (response.ok) {
+                        const successMessageDiv = document.createElement('div');
+                        successMessageDiv.className = 'chat-message bot';
+                        successMessageDiv.innerHTML = `
+                            <div class="avatar bot-avatar">🤖</div>
+                            <div class="message-content">
+                                Storage set to ${storeType} successfully. You can now ask questions.
+                                <div class="message-timestamp">${getTimestamp()}</div>
+                            </div>
+                        `;
+                        chatArea.appendChild(successMessageDiv);
+                    } else {
+                        const errorMessageDiv = document.createElement('div');
+                        errorMessageDiv.className = 'chat-message bot';
+                        errorMessageDiv.innerHTML = `
+                            <div class="avatar bot-avatar">🤖</div>
+                            <div class="message-content message-error">
+                                Error setting storage to ${storeType}: ${data.error || 'Failed to set'}
+                                <div class="message-timestamp">${getTimestamp()}</div>
+                            </div>
+                        `;
+                        chatArea.appendChild(errorMessageDiv);
+                    }
+                } catch (error) {
+                    console.error(`Storage ${storeType} error:`, error);
+                    actionMessageDiv.remove();
+                    const errorMessageDiv = document.createElement('div');
+                    errorMessageDiv.className = 'chat-message bot';
+                    errorMessageDiv.innerHTML = `
+                        <div class="avatar bot-avatar">🤖</div>
+                        <div class="message-content message-error">
+                            Error setting storage to ${storeType}: ${error.message}
+                            <div class="message-timestamp">${getTimestamp()}</div>
+                        </div>
+                    `;
+                    chatArea.appendChild(errorMessageDiv);
+                }
+
+                scrollToBottom();
+            });
+        });
+
+        // Send message
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) {
+                messageInput.focus();
+                return;
+            }
+
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.className = 'chat-message user';
+            userMessageDiv.innerHTML = `
+                <div class="avatar user-avatar">👤</div>
+                <div class="message-content">
+                    ${message}
+                    <div class="message-timestamp">${getTimestamp()}</div>
+                </div>
+            `;
+            chatArea.appendChild(userMessageDiv);
+            messageInput.value = '';
+            scrollToBottom();
+
+            const loadingMessageDiv = document.createElement('div');
+            loadingMessageDiv.className = 'chat-message bot';
+            loadingMessageDiv.innerHTML = `
+                <div class="avatar bot-avatar">🤖</div>
+                <div class="message-content message-loading">
+                    Thinking...
+                    <div class="message-timestamp">${getTimestamp()}</div>
+                </div>
+            `;
+            chatArea.appendChild(loadingMessageDiv);
+            scrollToBottom();
+
+            try {
+                console.log('Sending query:', message);
+                const response = await fetch('/api/rag/pdf-query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: message })
+                });
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                loadingMessageDiv.remove();
+
+                if (response.ok) {
+                    const botMessageDiv = document.createElement('div');
+                    botMessageDiv.className = 'chat-message bot';
+                    botMessageDiv.innerHTML = `
+                        <div class="avatar bot-avatar">🤖</div>
+                        <div class="message-content">
+                            ${data.response || 'No response received'}
+                            <div class="message-timestamp">${getTimestamp()}</div>
+                        </div>
+                    `;
+                    chatArea.appendChild(botMessageDiv);
+                } else {
+                    const errorMessageDiv = document.createElement('div');
+                    errorMessageDiv.className = 'chat-message bot';
+                    errorMessageDiv.innerHTML = `
+                        <div class="avatar bot-avatar">🤖</div>
+                        <div class="message-content message-error">
+                            Error: ${data.error || 'Failed to fetch response'}
+                            <div class="message-timestamp">${getTimestamp()}</div>
+                        </div>
+                    `;
+                    chatArea.appendChild(errorMessageDiv);
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                loadingMessageDiv.remove();
+                const errorMessageDiv = document.createElement('div');
+                errorMessageDiv.className = 'chat-message bot';
+                errorMessageDiv.innerHTML = `
+                    <div class="avatar bot-avatar">🤖</div>
+                    <div class="message-content message-error">
+                        Error: ${error.message}
+                        <div class="message-timestamp">${getTimestamp()}</div>
+                    </div>
+                `;
+                chatArea.appendChild(errorMessageDiv);
+            }
+
+            scrollToBottom();
+        }
+
+        // Auto-scroll to bottom
+        function scrollToBottom() {
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+    </script>
+</body>
+</html>

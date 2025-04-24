@@ -1,0 +1,282 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mr. Deepfake</title>
+    <style>
+        :root {
+            --dark-bg: #121212;
+            --darker-bg: #0a0a0a;
+            --accent-blue: #4285f4;
+            --text-color: #ffffff;
+            --secondary-text: #b0b0b0;
+            --card-bg: #1e1e1e;
+            --border-color: #333333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #000000;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            color: white;
+        }
+
+        h1 {
+            font-size: 5em;
+            margin-bottom: 0.2em;
+            background: linear-gradient(90deg, #ffffff, #42a5f5), linear-gradient(90deg, #2196f3, #808080);
+            background-size: 200% 100%, 200% 100%;
+            background-position: 0% 0%, 100% 0%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: colorMoveLeft 6s ease-in-out infinite, colorMoveRight 6s ease-in-out infinite;
+        }
+
+        @keyframes colorMoveLeft {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 0%; }
+            100% { background-position: 0% 0%; }
+        }
+
+        @keyframes colorMoveRight {
+            0% { background-position: 100% 0%; }
+            50% { background-position: 0% 0%; }
+            100% { background-position: 100% 0%; }
+        }
+
+        p {
+            font-size: 1.2em;
+            margin-bottom: 1.5em;
+            color: #bbb;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 2em;
+            justify-content: center;
+            margin-top: 5em;
+        }
+
+        .button {
+            background-color: #2196f3;
+            color: white;
+            padding: 1em 2em;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+
+        .button.disabled {
+            background-color: #42a5f5;
+            cursor: not-allowed;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="galaxyCanvas"></canvas>
+    <div class="content">
+        <h1>Mr. Deepfake</h1>
+        <p>Your AI-powered Deepfake Research Assistant and Detector</p>
+        <div class="buttons">
+            <button class="button" onclick="window.location.href='/research'">Ask Research Assistant</button>
+            <button class="button" onclick="window.location.href='/deepfake'">Detect Deepfake Image</button>
+            <button class="button" onclick="window.location.href='/pdf'">PDF Research Assistant</button>
+        </div>
+    </div>
+    <div id="overlay" class="overlay"></div>
+    <script>
+        const canvas = document.getElementById('galaxyCanvas');
+        const ctx = canvas.getContext('2d');
+        const overlay = document.getElementById('overlay');
+        const buttons = document.querySelectorAll('.button');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        class Particle {
+            constructor() {
+                this.reset();
+                this.orbitRadius = Math.random() * 250 + 50;
+                this.angle = Math.random() * Math.PI * 2;
+                this.speed = Math.random() * 0.005 + 0.001;
+                this.size = Math.random() * 3 + 1;
+                this.color = this.getRandomColor();
+            }
+
+            getRandomColor() {
+                const colors = ['#2196f3', '#42a5f5', '#bbdefb', '#ffffff'];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            reset() {
+                this.x = canvas.width / 2;
+                this.y = canvas.height / 2;
+            }
+
+            update(cursorX, cursorY) {
+                this.angle += this.speed;
+                const radiusPulse = Math.sin(this.angle * 2) * 30;
+                this.x = canvas.width / 2 + Math.cos(this.angle) * (this.orbitRadius + radiusPulse);
+                this.y = canvas.height / 2 + Math.sin(this.angle) * (this.orbitRadius + radiusPulse);
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+        const particles = [];
+        for (let i = 0; i < 500; i++) {
+            particles.push(new Particle());
+        }
+
+        let cursorX = canvas.width / 2;
+        let cursorY = canvas.height / 2;
+        canvas.addEventListener('mousemove', (e) => {
+            cursorX = e.clientX;
+            cursorY = e.clientY;
+        });
+
+        let activeLines = [];
+        let frameCount = 0;
+        const maxLines = 5;
+        const framesToAddLine = 300;
+
+        function addLine(particle) {
+            const maxLinesAtFrame = Math.min(maxLines, Math.floor(frameCount / framesToAddLine) + 1);
+            if (activeLines.length < maxLinesAtFrame && Math.random() < 0.1) {
+                activeLines.push(particle);
+            }
+        }
+
+        function drawLines() {
+            ctx.lineWidth = 0.8;
+            const dx = cursorX - canvas.width / 2;
+            const dy = cursorY - canvas.height / 2;
+            const angleToCursor = Math.atan2(dy, dx);
+
+            activeLines.forEach(particle => {
+                ctx.beginPath();
+                ctx.moveTo(canvas.width / 2, canvas.height / 2);
+                ctx.lineTo(particle.x, particle.y);
+                ctx.strokeStyle = '#ffffff';
+                ctx.stroke();
+            });
+        }
+
+        function animate() {
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            frameCount++;
+            particles.forEach(particle => {
+                particle.update(cursorX, cursorY);
+                particle.draw();
+                addLine(particle);
+            });
+
+            drawLines();
+
+            requestAnimationFrame(animate);
+        }
+
+        buttons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                if (!button.classList.contains('disabled')) {
+                    overlay.style.display = 'block';
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                    }, 500);
+                }
+            });
+        });
+
+        animate();
+    </script>
+</body>
+</html>
