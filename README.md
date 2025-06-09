@@ -29,7 +29,7 @@ This project is distinct from other initiatives like the **BA-TFD+ framework** a
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/mr-deepfake.git
+https://github.com/dks6194/mr_deepfake.git
 cd mr-deepfake
 
 # Install the required dependencies
