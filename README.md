@@ -34,4 +34,5 @@ cd mr-deepfake
 
 # Install the required dependencies
 pip install -r requirements.txt
-
+### Demo Video
+![Demo GIF](assets/demo.gif)
